@@ -5,7 +5,7 @@ Generates a random route on Switzerland's public railway system
 1. Clone repo.
 2. Install frontend: `npm install`
 3. Host `/api/randomTrain.php` on public webserver.
-4. Change URL in `src/store/index.js`
+4. Change API URL in `src/store/index.js` to the one of your webserver:
 ```javascript
 let app_api_url = `${protocol}//gawuerfel.example.com/api`;
 ```
@@ -17,4 +17,6 @@ let app_api_url = `${protocol}//gawuerfel.example.com/api`;
 2. Upload contents of `/dist` to same public webserver.
 
 ## Dependencies
-[Swiss public transport API](https://transport.opendata.ch/docs.html)
+- NPM 11.14 or newer
+- Webserver with PHP 8.2 or newer
+- [Swiss public transport API](https://transport.opendata.ch/docs.html)
