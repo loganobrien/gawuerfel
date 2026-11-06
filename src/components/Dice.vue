@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useGlobalState } from '@/store';
-import { useFetch, useEventBus, useDebounceFn } from '@vueuse/core';
+import { useFetch, useEventBus, useDebounceFn, useStorage } from '@vueuse/core';
 
 // Define variables
 const store = useGlobalState();
@@ -11,6 +11,7 @@ const stations = ref([]);
 const stationsList = ref([]);
 const randomTrain = ref(null);
 const randomStop = ref(null);
+const journeysStorage = useStorage(`journeys`, []);
 
 // Lookup stations on transport.opendata.ch
 const searchStations = async () => {
@@ -79,6 +80,27 @@ function reset() {
   randomTrain.value = null;
   randomStop.value = null;
 }
+
+function saveJourney() {
+  journeysStorage.value.push({
+    from: {
+      station_id: randomTrain.value.station_id,
+      station_name: randomTrain.value.station_name,
+      departure: randomTrain.value.departure,
+    },
+    to: {
+      station_id: randomStop.value.id,
+      station_name: randomStop.value.name,
+      arrival: randomStop.value.arrival,
+    },
+  });
+
+  stationName.value = randomStop.value.name;
+  stationId.value = randomStop.value.id;
+
+  randomTrain.value = null;
+  randomStop.value = null;
+}
 </script>
 
 <template>
@@ -137,7 +159,29 @@ function reset() {
   <div v-if="randomStop" class="button-wrapper">
     <button class="option-btn" @click="reset()">Zurücksetzen</button>
     <button class="option-btn" @click="getRandomStop()">Erneut Würfeln</button>
-    <!--<button class="option-btn active" @click="saveJourney()">Bestätigen</button>-->
+    <button class="option-btn active" @click="saveJourney()">Bestätigen</button>
+  </div>
+
+  <!-- Journeys overview -->
+  <div v-if="journeysStorage.length > 0" class="card">
+    <h2>Deine Reise</h2>
+    <div class="journey-list">
+      <div v-for="(journey, i) in journeysStorage" :key="i" class="journey-item">
+        <table class="journey">
+          <tbody>
+            <tr>
+              <td>{{ journey.from.departure }}</td>
+              <td>{{ journey.from.station_name }}</td>
+            </tr>
+            <tr>
+              <td>{{ journey.to.arrival }}</td>
+              <td>{{ journey.to.station_name }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <button class="btn danger" @click="journeysStorage = []">Reise Löschen</button>
   </div>
 
 </template>
@@ -217,6 +261,13 @@ ul li {
   transition: all 0.3s ease;
 }
 
+.card h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 0;
+}
+
 .card:not(:first-child) {
   margin-top: 1em;
 }
@@ -250,5 +301,65 @@ ul li {
 .option-btn:hover {
   color: var(--text-primary);
   border-color: var(--accent-copper);
+}
+
+.journey-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.journey-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.journey-item:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.journey-item:last-child {
+  margin-bottom: 1em;
+}
+
+table.journey {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+table.journey td:nth-child(1) {
+  width: 3.5em;
+}
+
+.btn.danger {
+  color: var(--loss);
+  border-color: var(--loss);
+}
+
+.btn.danger:hover {
+  background-color: rgba(194, 120, 120, 0.15);
+}
+
+.btn {
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+  background-color: transparent;
+  color: var(--text-primary);
+}
+
+.btn:hover {
+  background-color: var(--bg-card-hover);
 }
 </style>

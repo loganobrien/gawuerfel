@@ -4,7 +4,7 @@ import { createGlobalState } from '@vueuse/core';
 export const useGlobalState = createGlobalState(() => {
   const _buildURLs = () => {
     const protocol = location.protocol;
-    let app_api_url = `${protocol}//gawuerfel.example.com/api`;
+    let app_api_url = `${protocol}//gawuerfel.birch.li/api`;
 
     return {
       app_api: app_api_url,
