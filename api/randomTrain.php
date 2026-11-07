@@ -37,6 +37,21 @@ function curlRequest($url) {
   return json_decode($result, true);
 }
 
+function isWithin1Hour($dateString) {
+  try {
+    $date = new DateTimeImmutable($dateString);
+    $now = new DateTimeImmutable('now');
+
+    $isValidWithin1Hour =
+      $date > $now &&
+      $date <= $now->modify('+1 hour');
+  } catch (Exception) {
+    return false;
+  }
+
+  return $isValidWithin1Hour;
+}
+
 function formatTime($dateTimeString) {
   try {
     $date = new DateTimeImmutable($dateTimeString);
@@ -51,10 +66,9 @@ function formatTime($dateTimeString) {
 
 // Set header
 header("Access-Control-Allow-Origin: *");
-header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Max-Age: 86400');
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header('Content-Type: application/json');
 
 // Get request handler
@@ -70,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   // Query stationboard
   $stationId = $param_station;
   $departure = nowPlus5Min();
-  $url = "https://transport.opendata.ch/v1/stationboard?id=".$stationId."&transportations=train&datetime=".urlencode($departure).'&limit=10';
+  $url = "https://transport.opendata.ch/v1/stationboard?id=".$stationId."&transportations=train&datetime=".urlencode($departure).'&limit=15';
   $result = curlRequest($url);
 
   if (isset($result["errors"])) {
@@ -86,7 +100,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   }
 
   // Get random train
-  $random_train = $result["stationboard"][array_rand($result["stationboard"])];
+  $trains = array();
+  foreach ($result["stationboard"] as $train) {
+    if ($train["stop"]["departure"] != null && isWithin1Hour($train["stop"]["departure"])) {
+      array_push($trains, array(
+        "category" => $train["category"],
+        "number" => $train["number"],
+        "stop_departure" => formatTime($train["stop"]["departure"]),
+        "stop_platform" => $train["stop"]["platform"],
+        "to" => $train["to"],
+        "passList" => $train["passList"],
+      ));
+    }
+  }
+  $random_train = $trains[array_rand($trains)];
 
   // Build pass list
   $passList = array();
@@ -106,8 +133,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     "station_name" => $result["station"]["name"],
     "train_category" => $random_train["category"],
     "train_number" => $random_train["number"],
-    "departure" => formatTime($random_train["stop"]["departure"]),
-    "platform" => $random_train["stop"]["platform"],
+    "departure" => $random_train["stop_departure"],
+    "platform" => $random_train["stop_platform"],
     "to" => $random_train["to"],
     "passList" => $passList,
   );
