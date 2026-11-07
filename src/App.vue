@@ -6,40 +6,43 @@ const store = useGlobalState();
 </script>
 
 <template>
-  <header>
-    <h1>GA-Würfel</h1>
-    <aside>
-      <p>version: {{ store.app.version }}</p>
-      <p>buildTime: {{ new Date(store.app.buildTime).toLocaleString("de-CH", { dateStyle: 'medium', timeStyle: 'short' }) }}</p>
-    </aside>
-  </header>
-  <main>
-    <router-view />
-  </main>
-  <footer>
-    by <a href="https://github.com/loganobrien/gawuerfel" target="_blank" rel="noopener noreferrer">dodo</a>
-  </footer>
+  <div class="main-wrapper">
+    <header>
+      <h1>GA-Würfel</h1>
+    </header>
+
+    <main>
+      <router-view />
+    </main>
+    
+    <footer>
+      by <a href="https://github.com/loganobrien/gawuerfel" target="_blank" rel="noopener noreferrer">dodo</a>
+      <aside>
+        <p>version: {{ store.app.version }}</p>
+        <p>buildTime: {{ new Date(store.app.buildTime).toLocaleString("de-CH", { dateStyle: 'medium', timeStyle: 'short' }) }}</p>
+      </aside>
+    </footer>
+  </div>
   <notify />
 </template>
 
 <style scoped>
+.main-wrapper {
+  margin: 0 auto;
+  width: 40em;
+}
+
+@media (max-width: 600px) {
+  .main-wrapper {
+    margin: 0;
+    width: 100%;
+  }
+}
+
 h1 {
   font-size: 22px;
   color: var(--text-primary);
   font-weight: bold;
-}
-
-aside {
-  position: absolute;
-  top: 0.5em;
-  right: 0.5em;
-  text-align: right;
-  color: var(--text-secondary);
-}
-
-aside p {
-  margin: 0;
-  font-size: 0.8em;
 }
 
 footer {
@@ -55,5 +58,13 @@ a {
 
 a:hover {
   color: var(--accent-copper-light);
+}
+
+aside {
+  color: var(--text-secondary);
+}
+
+aside p {
+  margin: 0;
 }
 </style>

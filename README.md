@@ -7,7 +7,9 @@ Generates a random route on Switzerland's public railway system
 3. Host `/api/randomTrain.php` on public webserver.
 4. Change API URL in `src/store/index.js` to the one of your webserver:
 ```javascript
-let app_api_url = `${protocol}//gawuerfel.example.com/api`;
+  const urls = {
+    app_api: `https://gawuerfel.example.com/api`,
+  }
 ```
 5. Start frontend: `npm run dev -- --host`
 6. Visit url displayed in terminal.

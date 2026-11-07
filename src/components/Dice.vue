@@ -20,7 +20,7 @@ const searchStations = async () => {
     return;
   }
 
-  const { data, error } = await useFetch(`${location.protocol}//transport.opendata.ch/v1/locations?query=${stationName.value}&type=station`, { updateDataOnError: true });
+  const { data, error } = await useFetch(`${store.urls.opendata}/locations?query=${stationName.value}&type=station`, { updateDataOnError: true });
   if (error.value) {
     try { data.value = JSON.parse(data.value)?.error } catch (err) { }
     return useEventBus("notify").emit(data.value || error.value, "bad");
@@ -51,6 +51,10 @@ function selectStation(sta) {
 
 // Get random train on selected station from api
 const getRandomTrain = async () => {
+  if (!stationId.value) {
+    return useEventBus("notify").emit("Kein gültiger Bahnhof ausgewählt", "warn");
+  }
+
   const { data, error } = await useFetch(`${store.urls.app_api}/randomTrain.php?station=${stationId.value}`, { updateDataOnError: true });
   if (error.value) {
     try { data.value = JSON.parse(data.value)?.error } catch (err) { }
@@ -106,7 +110,7 @@ function saveJourney() {
 <template>
 
   <!-- Search input -->
-  <div v-if="!randomTrain" class="search-box">
+  <div v-if="!randomTrain" class="search-box" :class="{ open: stationsList.length > 0 }">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <circle cx="11" cy="11" r="8"></circle>
       <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -116,9 +120,10 @@ function saveJourney() {
   </div>
 
   <!-- Search results -->
-  <ul v-if="stationsList.length > 0">
-    <li v-for="(station, i) in stationsList" :key="i" @click="selectStation(station)">{{ station.name }}</li>
-  </ul>
+  <div v-if="stationsList.length > 0" class="search-suggestions">
+    <div v-for="(station, i) in stationsList" :key="i" class="suggestion-item" @click="selectStation(station)">
+      {{ station.name }}</div>
+  </div>
 
   <!-- Dice button -->
   <button v-if="!randomTrain" class="action-btn primary" @click="getRandomTrain()">
@@ -136,8 +141,8 @@ function saveJourney() {
     {{ randomTrain.train_category }}{{ randomTrain.train_number }} - Richtung {{ randomTrain.to }}<br>
     um {{ randomTrain.departure }} Uhr<br>
     ab Gleis {{ randomTrain.platform }}<br>
-    <span v-if="randomTrain.passList.length > 1">{{ randomTrain.passList.length }} mögliche Stops</span>
-    <span v-else style="color: red;">1 möglicher Stop</span>
+    <span v-if="randomTrain.passList.length > 1" class="label good">{{ randomTrain.passList.length }} mögliche Stops</span>
+    <span v-else class="label bad">nur 1 möglicher Stop</span>
   </div>
 
   <!-- Action buttons -->
@@ -149,8 +154,8 @@ function saveJourney() {
 
   <!-- Information on random stop -->
   <div v-if="randomStop" class="card">
-    <span v-if="randomStop.stops > 1">{{ randomStop.stops }} Stationen</span>
-    <span v-else style="color: red;">1 Station</span>
+    <span v-if="randomStop.stops > 1" class="label good">{{ randomStop.stops }} Stationen</span>
+    <span v-else class="label bad">1 Station</span>
     bis {{ randomStop.name }}<br>
     Ankunft um {{ randomStop.arrival }} Uhr
   </div>
@@ -207,6 +212,11 @@ function saveJourney() {
   gap: 12px;
 }
 
+.search-box.open {
+  border-radius: 10px 10px 0 0;
+  margin-bottom: 0;
+}
+
 .search-box input {
   background: none;
   border: none;
@@ -217,12 +227,26 @@ function saveJourney() {
   outline: none;
 }
 
-ul {
-  margin: 0;
+.search-suggestions {
+  width: 100%;
+  background-color: var(--bg-card);
+  border-radius: 0 0 14px 14px;
+  border: 0 1px 1px 1px solid var(--border);
+  padding: 0.5em;
+  transition: all 0.3s ease;
 }
 
-ul li {
+.suggestion-item {
+  padding: 0.5em;
   cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.suggestion-item:not(:last-child) {
+  border-bottom: 1px solid var(--border);
 }
 
 .action-btn.primary {
@@ -266,6 +290,22 @@ ul li {
   font-weight: 600;
   color: var(--text-primary);
   margin-top: 0;
+}
+
+span.label {
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+span.label.good {
+  background-color: rgba(107, 142, 107, 0.2);
+  color: var(--gain);
+}
+
+span.label.bad {
+  background-color: rgba(184, 115, 51, 0.2);
+  color: var(--accent-copper);
 }
 
 .card:not(:first-child) {
